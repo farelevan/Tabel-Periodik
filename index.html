@@ -5,298 +5,234 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>3D Periodic Table</title>
 <style>
-  * { margin: 0; padding: 0; box-sizing: border-box; }
-  body {
-    background: #0a0a1a;
-    color: #e0e0ff;
-    font-family: 'Courier New', monospace;
-    overflow-x: hidden;
-    min-height: 100vh;
-  }
-  #header {
-    text-align: center;
-    padding: 20px;
-    background: linear-gradient(180deg, #0a0a2e 0%, transparent 100%);
-  }
-  #header h1 {
-    font-size: 22px;
-    letter-spacing: 6px;
-    color: #7df9ff;
-    text-shadow: 0 0 20px #7df9ff88;
-    font-weight: 300;
-    text-transform: uppercase;
-  }
-  #header p {
-    font-size: 11px;
-    color: #8888aa;
-    letter-spacing: 3px;
-    margin-top: 6px;
-  }
+* { margin:0; padding:0; box-sizing:border-box; }
+body {
+  background: #060612;
+  color: #e0e0ff;
+  font-family: 'Courier New', monospace;
+  overflow: hidden;
+  height: 100vh;
+  user-select: none;
+}
 
-  #controls {
-    display: flex;
-    justify-content: center;
-    gap: 8px;
-    padding: 10px 20px;
-    flex-wrap: wrap;
-  }
-  .ctrl-btn {
-    padding: 6px 14px;
-    border: 1px solid #334;
-    background: #111128;
-    color: #aab;
-    font-size: 11px;
-    letter-spacing: 1px;
-    cursor: pointer;
-    border-radius: 3px;
-    transition: all 0.2s;
-    text-transform: uppercase;
-  }
-  .ctrl-btn:hover, .ctrl-btn.active {
-    border-color: #7df9ff;
-    color: #7df9ff;
-    background: #071a1f;
-    box-shadow: 0 0 8px #7df9ff44;
-  }
+#ui-top {
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  z-index: 100;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  pointer-events: none;
+}
 
-  #view-tabs {
-    display: flex;
-    justify-content: center;
-    gap: 6px;
-    padding: 8px;
-  }
-  .view-tab {
-    padding: 5px 16px;
-    border: 1px solid #223;
-    background: #0d0d20;
-    color: #778;
-    font-size: 10px;
-    cursor: pointer;
-    border-radius: 2px;
-    letter-spacing: 2px;
-    text-transform: uppercase;
-    transition: all 0.2s;
-  }
-  .view-tab.active {
-    border-color: #ff79c6;
-    color: #ff79c6;
-    background: #1a0d18;
-    box-shadow: 0 0 8px #ff79c644;
-  }
+#title {
+  margin-top: 14px;
+  font-size: 13px;
+  letter-spacing: 8px;
+  color: #7df9ff;
+  text-shadow: 0 0 24px #7df9ff66;
+  font-weight: 300;
+  text-transform: uppercase;
+  pointer-events: none;
+}
 
-  #scene-container {
-    width: 100%;
-    height: 500px;
-    position: relative;
-    perspective: 900px;
-    cursor: grab;
-    overflow: hidden;
-  }
-  #scene-container:active { cursor: grabbing; }
+#shape-tabs {
+  margin-top: 10px;
+  display: flex;
+  gap: 6px;
+  pointer-events: all;
+}
+.stab {
+  padding: 5px 14px;
+  border: 1px solid #223;
+  background: rgba(10,10,30,0.85);
+  color: #668;
+  font-size: 10px;
+  cursor: pointer;
+  border-radius: 2px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  transition: all 0.25s;
+  backdrop-filter: blur(6px);
+}
+.stab:hover { border-color: #446; color: #99b; }
+.stab.active {
+  border-color: #7df9ff;
+  color: #7df9ff;
+  background: rgba(7,26,31,0.9);
+  box-shadow: 0 0 10px #7df9ff33;
+}
 
-  #scene {
-    width: 100%;
-    height: 100%;
-    position: relative;
-    transform-style: preserve-3d;
-    transition: transform 0.05s linear;
-  }
+#filter-row {
+  margin-top: 7px;
+  display: flex;
+  gap: 5px;
+  flex-wrap: wrap;
+  justify-content: center;
+  pointer-events: all;
+}
+.fbtn {
+  padding: 4px 10px;
+  border: 1px solid #223;
+  background: rgba(10,10,30,0.8);
+  color: #556;
+  font-size: 9px;
+  cursor: pointer;
+  border-radius: 2px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  transition: all 0.2s;
+}
+.fbtn:hover { border-color: #445; color: #889; }
+.fbtn.active { border-color: #ff79c6; color: #ff79c6; background: rgba(26,13,24,0.85); }
 
-  .el-card {
-    position: absolute;
-    width: 54px;
-    height: 54px;
-    border: 1px solid rgba(255,255,255,0.15);
-    border-radius: 4px;
-    cursor: pointer;
-    transform-style: preserve-3d;
-    transition: transform 0.4s ease, box-shadow 0.3s ease;
-    backface-visibility: hidden;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    user-select: none;
-  }
-  .el-card:hover {
-    transform: translateZ(20px) scale(1.12) !important;
-    z-index: 100;
-    box-shadow: 0 0 18px currentColor;
-  }
-  .el-num {
-    font-size: 9px;
-    opacity: 0.7;
-    line-height: 1;
-  }
-  .el-sym {
-    font-size: 17px;
-    font-weight: bold;
-    line-height: 1.1;
-  }
-  .el-name {
-    font-size: 7px;
-    opacity: 0.6;
-    line-height: 1;
-    text-align: center;
-  }
-  .el-mass {
-    font-size: 7px;
-    opacity: 0.5;
-  }
+#hint {
+  margin-top: 7px;
+  font-size: 9px;
+  color: #334455;
+  letter-spacing: 3px;
+  pointer-events: none;
+}
 
-  /* Category colors */
-  .cat-alkali      { background: #1a1a3a; border-color: #ff6b6b; color: #ff9999; }
-  .cat-alkaline    { background: #1a2a1a; border-color: #ffd93d; color: #ffe680; }
-  .cat-transition  { background: #0f1a2a; border-color: #74b9ff; color: #a0ccff; }
-  .cat-post        { background: #1a1a2a; border-color: #81ecec; color: #b0f0f0; }
-  .cat-metalloid   { background: #1a2a2a; border-color: #55efc4; color: #88ffdd; }
-  .cat-nonmetal    { background: #2a1a2a; border-color: #fd79a8; color: #ffaac8; }
-  .cat-noble       { background: #2a1a3a; border-color: #a29bfe; color: #c4baff; }
-  .cat-lanthanide  { background: #2a1a1a; border-color: #e17055; color: #ff9f7f; }
-  .cat-actinide    { background: #2a2a1a; border-color: #fdcb6e; color: #ffe0a0; }
+/* Canvas fills screen */
+#canvas3d {
+  position: fixed;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  cursor: grab;
+}
+#canvas3d:active { cursor: grabbing; }
 
-  /* Sphere view */
-  .sphere-view .el-card {
-    width: 50px;
-    height: 50px;
-    border-radius: 50% !important;
-    border-width: 2px;
-  }
-  /* Cylinder view */
-  .cylinder-view .el-card {
-    width: 50px;
-    height: 66px;
-    border-radius: 6px 6px 6px 6px;
-  }
+/* Info panel */
+#info-panel {
+  position: fixed;
+  bottom: 30px; left: 50%;
+  transform: translateX(-50%);
+  background: rgba(8,8,28,0.95);
+  border: 1px solid #7df9ff55;
+  border-radius: 12px;
+  padding: 18px 24px;
+  min-width: 300px;
+  z-index: 200;
+  display: none;
+  backdrop-filter: blur(16px);
+  animation: slideUp 0.2s ease;
+  box-shadow: 0 0 40px #7df9ff22;
+}
+@keyframes slideUp {
+  from { opacity:0; transform: translateX(-50%) translateY(10px); }
+  to   { opacity:1; transform: translateX(-50%) translateY(0); }
+}
+#info-panel .ip-header {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+#ip-sym { font-size: 36px; color: #7df9ff; letter-spacing: 2px; line-height: 1; }
+#ip-name { font-size: 13px; color: #aabbcc; font-weight: 300; }
+#ip-num-badge {
+  margin-left: auto;
+  font-size: 11px;
+  color: #445566;
+  border: 1px solid #223;
+  border-radius: 3px;
+  padding: 2px 8px;
+}
+#info-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 4px 16px;
+  font-size: 11px;
+}
+.ig-row { display: contents; }
+.ig-label { color: #556677; }
+.ig-val { color: #ccddef; text-align: right; }
+#close-info {
+  position: absolute;
+  top: 10px; right: 14px;
+  background: none; border: none;
+  color: #446; font-size: 16px;
+  cursor: pointer;
+}
+#close-info:hover { color: #7df9ff; }
 
-  #info-panel {
-    position: fixed;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    background: #0d0d22ee;
-    border: 1px solid #7df9ff;
-    border-radius: 10px;
-    padding: 24px 28px;
-    min-width: 260px;
-    z-index: 1000;
-    box-shadow: 0 0 40px #7df9ff44;
-    display: none;
-    backdrop-filter: blur(10px);
-    animation: panelIn 0.25s ease;
-  }
-  @keyframes panelIn {
-    from { opacity: 0; transform: translate(-50%, -48%) scale(0.95); }
-    to   { opacity: 1; transform: translate(-50%, -50%) scale(1); }
-  }
-  #info-panel h2 { font-size: 32px; color: #7df9ff; letter-spacing: 2px; }
-  #info-panel h3 { font-size: 14px; color: #aabbcc; margin-bottom: 12px; font-weight: 300; }
-  #info-panel table { width: 100%; font-size: 12px; border-collapse: collapse; }
-  #info-panel td { padding: 4px 6px; }
-  #info-panel td:first-child { color: #778899; }
-  #info-panel td:last-child { color: #ddeeff; text-align: right; }
-  #info-panel tr:nth-child(odd) td { background: rgba(255,255,255,0.03); }
-  #close-btn {
-    position: absolute;
-    top: 8px; right: 12px;
-    background: none;
-    border: none;
-    color: #7df9ff;
-    font-size: 18px;
-    cursor: pointer;
-  }
-
-  #legend {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 6px;
-    justify-content: center;
-    padding: 12px 20px 20px;
-  }
-  .legend-item {
-    display: flex;
-    align-items: center;
-    gap: 5px;
-    font-size: 10px;
-    color: #8899aa;
-    cursor: pointer;
-    padding: 3px 8px;
-    border-radius: 3px;
-    border: 1px solid transparent;
-    transition: all 0.2s;
-  }
-  .legend-item:hover { border-color: #445; background: #111; }
-  .legend-dot { width: 8px; height: 8px; border-radius: 50%; }
-
-  #rotate-hint {
-    text-align: center;
-    font-size: 10px;
-    color: #445566;
-    padding-bottom: 8px;
-    letter-spacing: 2px;
-  }
+/* Legend */
+#legend {
+  position: fixed;
+  bottom: 14px; left: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  z-index: 100;
+  font-size: 9px;
+  opacity: 0.6;
+  pointer-events: none;
+}
+.leg { display: flex; align-items: center; gap: 5px; color: #8899aa; }
+.legdot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
 </style>
 </head>
 <body>
 
-<div id="header">
-  <h1>Periodic Table</h1>
-  <p>Interactive 3D · 118 Elements</p>
+<div id="ui-top">
+  <div id="title">Periodic Table · 3D</div>
+  <div id="shape-tabs">
+    <button class="stab active" data-shape="flat">⬛ Flat</button>
+    <button class="stab" data-shape="wave">〰 Wave</button>
+    <button class="stab" data-shape="cylinder">🔵 Cylinder</button>
+    <button class="stab" data-shape="sphere">🌐 Sphere</button>
+    <button class="stab" data-shape="spiral">🌀 Spiral</button>
+    <button class="stab" data-shape="helix">🧬 Helix</button>
+    <button class="stab" data-shape="mountain">⛰ Mountain</button>
+  </div>
+  <div id="filter-row">
+    <button class="fbtn active" data-cat="all">All</button>
+    <button class="fbtn" data-cat="alkali">Alkali</button>
+    <button class="fbtn" data-cat="alkaline">Alkaline</button>
+    <button class="fbtn" data-cat="transition">Transition</button>
+    <button class="fbtn" data-cat="nonmetal">Non-metal</button>
+    <button class="fbtn" data-cat="noble">Noble Gas</button>
+    <button class="fbtn" data-cat="lanthanide">Lanthanide</button>
+    <button class="fbtn" data-cat="actinide">Actinide</button>
+  </div>
+  <div id="hint">drag to rotate · scroll to zoom · click element</div>
 </div>
 
-<div id="view-tabs">
-  <button class="view-tab active" onclick="setShape('box')">⬛ Box</button>
-  <button class="view-tab" onclick="setShape('sphere')">⚪ Sphere</button>
-  <button class="view-tab" onclick="setShape('cylinder')">🔵 Cylinder</button>
-  <button class="view-tab" onclick="setShape('flat')">⬜ Flat</button>
-</div>
+<canvas id="canvas3d"></canvas>
 
-<div id="controls">
-  <button class="ctrl-btn active" onclick="filterCat('all')">All</button>
-  <button class="ctrl-btn" onclick="filterCat('alkali')">Alkali</button>
-  <button class="ctrl-btn" onclick="filterCat('alkaline')">Alkaline</button>
-  <button class="ctrl-btn" onclick="filterCat('transition')">Transition</button>
-  <button class="ctrl-btn" onclick="filterCat('nonmetal')">Non-metal</button>
-  <button class="ctrl-btn" onclick="filterCat('noble')">Noble Gas</button>
-  <button class="ctrl-btn" onclick="filterCat('lanthanide')">Lanthanide</button>
-  <button class="ctrl-btn" onclick="filterCat('actinide')">Actinide</button>
-</div>
-
-<div id="rotate-hint">drag to rotate · click element for details</div>
-
-<div id="scene-container">
-  <div id="scene"></div>
+<div id="info-panel">
+  <button id="close-info">✕</button>
+  <div class="ip-header">
+    <span id="ip-sym"></span>
+    <span id="ip-name"></span>
+    <span id="ip-num-badge">#<span id="ip-num"></span></span>
+  </div>
+  <div id="info-grid">
+    <span class="ig-label">Atomic Mass</span><span class="ig-val" id="ip-mass"></span>
+    <span class="ig-label">Category</span><span class="ig-val" id="ip-cat"></span>
+    <span class="ig-label">Period</span><span class="ig-val" id="ip-period"></span>
+    <span class="ig-label">Group</span><span class="ig-val" id="ip-group"></span>
+    <span class="ig-label">State 25°C</span><span class="ig-val" id="ip-state"></span>
+    <span class="ig-label">Electron config</span><span class="ig-val" id="ip-cfg"></span>
+  </div>
 </div>
 
 <div id="legend">
-  <div class="legend-item"><div class="legend-dot" style="background:#ff6b6b"></div>Alkali</div>
-  <div class="legend-item"><div class="legend-dot" style="background:#ffd93d"></div>Alkaline</div>
-  <div class="legend-item"><div class="legend-dot" style="background:#74b9ff"></div>Transition</div>
-  <div class="legend-item"><div class="legend-dot" style="background:#81ecec"></div>Post-transition</div>
-  <div class="legend-item"><div class="legend-dot" style="background:#55efc4"></div>Metalloid</div>
-  <div class="legend-item"><div class="legend-dot" style="background:#fd79a8"></div>Non-metal</div>
-  <div class="legend-item"><div class="legend-dot" style="background:#a29bfe"></div>Noble Gas</div>
-  <div class="legend-item"><div class="legend-dot" style="background:#e17055"></div>Lanthanide</div>
-  <div class="legend-item"><div class="legend-dot" style="background:#fdcb6e"></div>Actinide</div>
-</div>
-
-<div id="info-panel">
-  <button id="close-btn" onclick="closeInfo()">✕</button>
-  <h2 id="ip-sym"></h2>
-  <h3 id="ip-name"></h3>
-  <table>
-    <tr><td>Atomic Number</td><td id="ip-num"></td></tr>
-    <tr><td>Atomic Mass</td><td id="ip-mass"></td></tr>
-    <tr><td>Category</td><td id="ip-cat"></td></tr>
-    <tr><td>Period</td><td id="ip-period"></td></tr>
-    <tr><td>Group</td><td id="ip-group"></td></tr>
-    <tr><td>State at 25°C</td><td id="ip-state"></td></tr>
-    <tr><td>Electron Config</td><td id="ip-config"></td></tr>
-  </table>
+  <div class="leg"><div class="legdot" style="background:#ff6b6b"></div>Alkali</div>
+  <div class="leg"><div class="legdot" style="background:#ffd93d"></div>Alkaline</div>
+  <div class="leg"><div class="legdot" style="background:#74b9ff"></div>Transition</div>
+  <div class="leg"><div class="legdot" style="background:#81ecec"></div>Post-transition</div>
+  <div class="leg"><div class="legdot" style="background:#55efc4"></div>Metalloid</div>
+  <div class="leg"><div class="legdot" style="background:#fd79a8"></div>Non-metal</div>
+  <div class="leg"><div class="legdot" style="background:#a29bfe"></div>Noble Gas</div>
+  <div class="leg"><div class="legdot" style="background:#e17055"></div>Lanthanide</div>
+  <div class="leg"><div class="legdot" style="background:#fdcb6e"></div>Actinide</div>
 </div>
 
 <script>
-const elements = [
+// ─── DATA ───────────────────────────────────────────────
+const ELEMENTS = [
   {n:1,s:"H",name:"Hydrogen",mass:"1.008",cat:"nonmetal",g:1,p:1,state:"Gas",cfg:"1s¹"},
   {n:2,s:"He",name:"Helium",mass:"4.003",cat:"noble",g:18,p:1,state:"Gas",cfg:"1s²"},
   {n:3,s:"Li",name:"Lithium",mass:"6.941",cat:"alkali",g:1,p:2,state:"Solid",cfg:"[He]2s¹"},
@@ -417,172 +353,400 @@ const elements = [
   {n:118,s:"Og",name:"Oganesson",mass:"294",cat:"noble",g:18,p:7,state:"Gas",cfg:"[Rn]5f¹⁴6d¹⁰7s²7p⁶"},
 ];
 
-// Grid layout mapping: period -> group -> position
+const CAT_COLORS = {
+  alkali:     '#ff6b6b',
+  alkaline:   '#ffd93d',
+  transition: '#74b9ff',
+  post:       '#81ecec',
+  metalloid:  '#55efc4',
+  nonmetal:   '#fd79a8',
+  noble:      '#a29bfe',
+  lanthanide: '#e17055',
+  actinide:   '#fdcb6e',
+};
+const CAT_BG = {
+  alkali:     '#2a0808',
+  alkaline:   '#2a2200',
+  transition: '#08142a',
+  post:       '#082a2a',
+  metalloid:  '#082a1a',
+  nonmetal:   '#2a082a',
+  noble:      '#1a082a',
+  lanthanide: '#2a1008',
+  actinide:   '#2a1e00',
+};
+
+// ─── GRID POSITION ────────────────────────────────────────
 function getGridPos(el) {
   let col = el.g - 1;
-  // Groups 3-12 start at index 2
-  // Insert gap after group 2 (index 1) for groups 1-2 then 13-18
-  if (el.g >= 3 && el.g <= 12) col = el.g - 1;
-  else if (el.g > 12) col = el.g - 1; // col 12..17
-  
   let row = el.p - 1;
-  // Lanthanides row 5 (index 5 in 0-based)
   if (el.cat === 'lanthanide') { row = 8; col = (el.n - 57) + 2; }
   if (el.cat === 'actinide' && el.n >= 89 && el.n <= 103) { row = 9; col = (el.n - 89) + 2; }
   return { row, col };
 }
 
-const CARD_W = 54, CARD_H = 54, GAP = 4;
-const TOTAL_COLS = 18;
-const scene = document.getElementById('scene');
-const container = document.getElementById('scene-container');
+// ─── 3D POSITIONS ─────────────────────────────────────────
+const COLS = 18, ROWS = 10;
+const STEP = 62; // spacing between cards
 
-let rotX = -18, rotY = 18;
-let targetRotX = -18, targetRotY = 18;
-let isDragging = false, lastX, lastY;
-let currentShape = 'box';
-let currentFilter = 'all';
-let cards = [];
-let animFrame;
+function computePositions(shape) {
+  const positions = [];
+  ELEMENTS.forEach((el, i) => {
+    const gp = getGridPos(el);
+    const nx = (gp.col / (COLS - 1)) * 2 - 1; // -1..1
+    const ny = (gp.row / (ROWS - 1)) * 2 - 1; // -1..1
 
-function buildTable() {
-  scene.innerHTML = '';
-  cards = [];
+    let x, y, z, rotX = 0, rotY = 0;
+    const W = COLS * STEP, H = ROWS * STEP;
 
-  const rows = 10, cols = 18;
-  const totalW = cols * (CARD_W + GAP);
-  const totalH = rows * (CARD_H + GAP);
-  const offsetX = -totalW / 2;
-  const offsetY = -totalH / 2;
+    if (shape === 'flat') {
+      x = (gp.col - COLS/2) * STEP;
+      y = (gp.row - ROWS/2) * STEP;
+      z = 0;
 
-  elements.forEach(el => {
-    const pos = getGridPos(el);
-    const x = offsetX + pos.col * (CARD_W + GAP);
-    const y = offsetY + pos.row * (CARD_H + GAP);
+    } else if (shape === 'wave') {
+      x = (gp.col - COLS/2) * STEP;
+      y = (gp.row - ROWS/2) * STEP;
+      z = Math.sin(gp.col * 0.6) * 140 + Math.cos(gp.row * 0.8) * 80;
 
-    // 3D Z offset based on atomic number for layered effect
-    const zBase = currentShape === 'flat' ? 0 : (Math.sin(pos.row * 0.4) * 30 + Math.cos(pos.col * 0.3) * 20);
+    } else if (shape === 'cylinder') {
+      // Wrap columns around a cylinder
+      const angle = (gp.col / COLS) * Math.PI * 2;
+      const radius = 320;
+      x = Math.sin(angle) * radius;
+      z = Math.cos(angle) * radius - radius;
+      y = (gp.row - ROWS/2) * STEP;
+      rotY = -angle * (180 / Math.PI);
 
-    const card = document.createElement('div');
-    card.className = `el-card cat-${el.cat}`;
-    card.innerHTML = `<span class="el-num">${el.n}</span><span class="el-sym">${el.s}</span><span class="el-name">${el.name.length > 9 ? el.name.slice(0,8)+'…' : el.name}</span><span class="el-mass">${el.mass}</span>`;
+    } else if (shape === 'sphere') {
+      // Map to sphere surface
+      const theta = (gp.col / COLS) * Math.PI * 2;
+      const phi = (gp.row / (ROWS - 1)) * Math.PI;
+      const R = 380;
+      x = R * Math.sin(phi) * Math.cos(theta);
+      y = R * Math.cos(phi) - 0;
+      z = R * Math.sin(phi) * Math.sin(theta) - R;
+      rotY = -theta * (180 / Math.PI);
+      rotX = (phi - Math.PI/2) * (180 / Math.PI);
 
-    card.style.left = (container.offsetWidth/2 + x) + 'px';
-    card.style.top = (container.offsetHeight/2 + y) + 'px';
-    card.style.transform = `translateZ(${zBase}px)`;
-    card.dataset.z = zBase;
-    card.dataset.x = x;
-    card.dataset.y = y;
-    card.dataset.idx = elements.indexOf(el);
+    } else if (shape === 'spiral') {
+      // Archimedes spiral in XZ, height by row
+      const t = i / ELEMENTS.length;
+      const angle = t * Math.PI * 6;
+      const r = 80 + t * 280;
+      x = Math.cos(angle) * r;
+      z = Math.sin(angle) * r - 250;
+      y = (gp.row - ROWS/2) * STEP * 0.6 + (t - 0.5) * 100;
 
-    card.addEventListener('click', (e) => {
-      e.stopPropagation();
-      showInfo(el);
-    });
+    } else if (shape === 'helix') {
+      // DNA-style double helix: two strands
+      const strand = gp.col % 2;
+      const t = (el.n - 1) / 117;
+      const angle = t * Math.PI * 8 + strand * Math.PI;
+      const R = 240;
+      x = Math.cos(angle) * R;
+      z = Math.sin(angle) * R - R;
+      y = (t - 0.5) * 700;
 
-    if (currentFilter !== 'all' && el.cat !== currentFilter) {
-      card.style.opacity = '0.12';
-      card.style.filter = 'grayscale(1)';
+    } else if (shape === 'mountain') {
+      // Pyramid/mountain: peak at center, lower at edges
+      x = (gp.col - COLS/2) * STEP;
+      const distFromCenter = Math.abs(gp.col - COLS/2) / (COLS/2);
+      const rowNorm = gp.row / (ROWS - 1);
+      z = -(1 - distFromCenter) * 300 * (1 - rowNorm * 0.5);
+      y = (gp.row - ROWS/2) * STEP;
     }
 
-    scene.appendChild(card);
-    cards.push(card);
+    positions.push({ x, y, z, rotX, rotY });
   });
+  return positions;
 }
 
-function setShape(shape) {
-  currentShape = shape;
-  document.querySelectorAll('.view-tab').forEach(b => b.classList.remove('active'));
-  event.target.classList.add('active');
+// ─── CANVAS 3D ENGINE ─────────────────────────────────────
+const canvas = document.getElementById('canvas3d');
+const ctx = canvas.getContext('2d');
 
-  if (shape === 'sphere') {
-    scene.classList.add('sphere-view');
-    scene.classList.remove('cylinder-view');
-  } else if (shape === 'cylinder') {
-    scene.classList.add('cylinder-view');
-    scene.classList.remove('sphere-view');
-  } else {
-    scene.classList.remove('sphere-view','cylinder-view');
+let W, H;
+function resize() {
+  W = canvas.width = window.innerWidth;
+  H = canvas.height = window.innerHeight;
+}
+resize();
+window.addEventListener('resize', resize);
+
+// Camera
+let camRotX = -20, camRotY = 15;
+let targetRotX = -20, targetRotY = 15;
+let zoom = 1.0;
+let targetZoom = 1.0;
+let isDragging = false, lastMX, lastMY;
+let autoRotate = true;
+
+// Shape morph
+let currentShape = 'flat';
+let targetPositions = computePositions('flat');
+let currentPositions = targetPositions.map(p => ({...p}));
+let morphT = 1;
+let morphFrom = null;
+const MORPH_SPEED = 0.045;
+
+// Filter
+let activeFilter = 'all';
+
+// Hover
+let hoveredIdx = -1;
+let mouseX = -9999, mouseY = -9999;
+
+// ─── MATH HELPERS ─────────────────────────────────────────
+function project(x, y, z) {
+  // Apply camera rotation
+  let rx = camRotX * Math.PI / 180;
+  let ry = camRotY * Math.PI / 180;
+
+  // Rotate Y
+  let tx = x * Math.cos(ry) + z * Math.sin(ry);
+  let tz = -x * Math.sin(ry) + z * Math.cos(ry);
+  x = tx; z = tz;
+
+  // Rotate X
+  let ty = y * Math.cos(rx) - z * Math.sin(rx);
+  tz = y * Math.sin(rx) + z * Math.cos(rx);
+  y = ty; z = tz;
+
+  // Perspective
+  const fov = 700 * zoom;
+  const dist = fov / (fov + z + 800);
+  const px = W/2 + x * dist;
+  const py = H/2 + y * dist;
+  return { px, py, scale: dist, z };
+}
+
+function lerp(a, b, t) { return a + (b - a) * t; }
+function lerpPos(a, b, t) {
+  return {
+    x: lerp(a.x, b.x, t),
+    y: lerp(a.y, b.y, t),
+    z: lerp(a.z, b.z, t),
+    rotX: lerp(a.rotX||0, b.rotX||0, t),
+    rotY: lerp(a.rotY||0, b.rotY||0, t),
+  };
+}
+
+// ─── DRAW ─────────────────────────────────────────────────
+function drawCard(el, pos, proj, isHovered, isFiltered) {
+  const { px, py, scale } = proj;
+  const s = scale * 52;
+  const hs = s / 2;
+  const color = CAT_COLORS[el.cat] || '#888';
+  const bg = CAT_BG[el.cat] || '#111';
+
+  ctx.save();
+  ctx.translate(px, py);
+
+  const alpha = isFiltered ? 0.12 : 1.0;
+  ctx.globalAlpha = alpha;
+
+  if (isHovered && !isFiltered) {
+    ctx.shadowColor = color;
+    ctx.shadowBlur = 18;
   }
-  buildTable();
+
+  // Card background
+  ctx.fillStyle = bg;
+  ctx.strokeStyle = color;
+  ctx.lineWidth = isHovered ? 1.5 : 0.8;
+  const r = 4 * scale;
+  roundRect(ctx, -hs, -hs, s, s, r);
+  ctx.fill();
+  ctx.stroke();
+
+  if (isHovered) {
+    ctx.shadowBlur = 0;
+  }
+
+  // Text
+  const fs = Math.max(5, s * 0.15);
+  ctx.fillStyle = color;
+  ctx.textAlign = 'center';
+
+  // atomic number
+  ctx.font = `${fs * 0.7}px Courier New`;
+  ctx.fillStyle = color + '99';
+  ctx.fillText(el.n, 0, -hs + fs * 0.9);
+
+  // symbol
+  ctx.font = `bold ${fs * 1.3}px Courier New`;
+  ctx.fillStyle = color;
+  ctx.fillText(el.s, 0, fs * 0.4);
+
+  // name (only if big enough)
+  if (s > 28) {
+    ctx.font = `${fs * 0.55}px Courier New`;
+    ctx.fillStyle = color + 'aa';
+    const nameStr = el.name.length > 9 ? el.name.slice(0,8)+'…' : el.name;
+    ctx.fillText(nameStr, 0, hs - fs * 0.5);
+  }
+
+  ctx.restore();
 }
 
-function filterCat(cat) {
-  currentFilter = cat;
-  document.querySelectorAll('.ctrl-btn').forEach(b => b.classList.remove('active'));
-  event.target.classList.add('active');
-  cards.forEach((card, i) => {
-    const el = elements[parseInt(card.dataset.idx)];
-    if (cat === 'all' || el.cat === cat) {
-      card.style.opacity = '1';
-      card.style.filter = 'none';
-    } else {
-      card.style.opacity = '0.1';
-      card.style.filter = 'grayscale(1)';
+function roundRect(ctx, x, y, w, h, r) {
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.lineTo(x + w - r, y);
+  ctx.arcTo(x + w, y, x + w, y + r, r);
+  ctx.lineTo(x + w, y + h - r);
+  ctx.arcTo(x + w, y + h, x + w - r, y + h, r);
+  ctx.lineTo(x + r, y + h);
+  ctx.arcTo(x, y + h, x, y + h - r, r);
+  ctx.lineTo(x, y + r);
+  ctx.arcTo(x, y, x + r, y, r);
+  ctx.closePath();
+}
+
+let lastHitIdx = -1;
+function render() {
+  ctx.clearRect(0, 0, W, H);
+
+  // Smooth camera
+  camRotX += (targetRotX - camRotX) * 0.08;
+  camRotY += (targetRotY - camRotY) * 0.08;
+  zoom += (targetZoom - zoom) * 0.1;
+  if (!isDragging && autoRotate) targetRotY += 0.12;
+
+  // Morph
+  if (morphT < 1) {
+    morphT = Math.min(1, morphT + MORPH_SPEED);
+    const ease = morphT < 0.5 ? 2*morphT*morphT : -1+(4-2*morphT)*morphT;
+    for (let i = 0; i < ELEMENTS.length; i++) {
+      currentPositions[i] = lerpPos(morphFrom[i], targetPositions[i], ease);
     }
+  }
+
+  // Project all
+  const projected = ELEMENTS.map((el, i) => {
+    const p = currentPositions[i];
+    const proj = project(p.x, p.y, p.z);
+    return { el, proj, i };
   });
+
+  // Sort by Z (painter's algorithm)
+  projected.sort((a, b) => b.proj.z - a.proj.z);
+
+  // Hit test for hover
+  let newHover = -1;
+  for (let k = projected.length - 1; k >= 0; k--) {
+    const { el, proj, i } = projected[k];
+    const s = proj.scale * 52;
+    const hs = s / 2;
+    if (mouseX > proj.px - hs && mouseX < proj.px + hs &&
+        mouseY > proj.py - hs && mouseY < proj.py + hs) {
+      newHover = i;
+      break;
+    }
+  }
+  hoveredIdx = newHover;
+
+  // Draw
+  for (const { el, proj, i } of projected) {
+    const isFiltered = activeFilter !== 'all' && el.cat !== activeFilter;
+    drawCard(el, currentPositions[i], proj, hoveredIdx === i, isFiltered);
+  }
+
+  requestAnimationFrame(render);
 }
 
+// ─── EVENTS ───────────────────────────────────────────────
+canvas.addEventListener('mousemove', e => {
+  const r = canvas.getBoundingClientRect();
+  mouseX = e.clientX - r.left;
+  mouseY = e.clientY - r.top;
+  if (isDragging) {
+    targetRotY += (e.clientX - lastMX) * 0.35;
+    targetRotX -= (e.clientY - lastMY) * 0.35;
+    targetRotX = Math.max(-80, Math.min(80, targetRotX));
+    lastMX = e.clientX; lastMY = e.clientY;
+    autoRotate = false;
+  }
+});
+canvas.addEventListener('mousedown', e => {
+  isDragging = true; lastMX = e.clientX; lastMY = e.clientY;
+});
+document.addEventListener('mouseup', () => {
+  isDragging = false;
+  setTimeout(() => { autoRotate = true; }, 2000);
+});
+canvas.addEventListener('wheel', e => {
+  targetZoom *= e.deltaY > 0 ? 0.92 : 1.09;
+  targetZoom = Math.max(0.3, Math.min(3.0, targetZoom));
+}, { passive: true });
+
+canvas.addEventListener('touchstart', e => {
+  isDragging = true;
+  lastMX = e.touches[0].clientX; lastMY = e.touches[0].clientY;
+}, { passive: true });
+canvas.addEventListener('touchmove', e => {
+  if (!isDragging) return;
+  targetRotY += (e.touches[0].clientX - lastMX) * 0.35;
+  targetRotX -= (e.touches[0].clientY - lastMY) * 0.35;
+  targetRotX = Math.max(-80, Math.min(80, targetRotX));
+  lastMX = e.touches[0].clientX; lastMY = e.touches[0].clientY;
+  autoRotate = false;
+}, { passive: true });
+document.addEventListener('touchend', () => {
+  isDragging = false;
+  setTimeout(() => { autoRotate = true; }, 2000);
+});
+
+canvas.addEventListener('click', e => {
+  if (hoveredIdx >= 0) showInfo(ELEMENTS[hoveredIdx]);
+});
+
+// ─── SHAPE CHANGE ─────────────────────────────────────────
+function setShape(shape) {
+  if (shape === currentShape) return;
+  morphFrom = currentPositions.map(p => ({...p}));
+  targetPositions = computePositions(shape);
+  morphT = 0;
+  currentShape = shape;
+  document.querySelectorAll('.stab').forEach(b => b.classList.remove('active'));
+  document.querySelector(`[data-shape="${shape}"]`).classList.add('active');
+  autoRotate = true;
+}
+
+document.querySelectorAll('.stab').forEach(btn => {
+  btn.addEventListener('click', () => setShape(btn.dataset.shape));
+});
+
+// ─── FILTER ───────────────────────────────────────────────
+document.querySelectorAll('.fbtn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    activeFilter = btn.dataset.cat;
+    document.querySelectorAll('.fbtn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+  });
+});
+
+// ─── INFO PANEL ───────────────────────────────────────────
 function showInfo(el) {
   document.getElementById('ip-sym').textContent = el.s;
   document.getElementById('ip-name').textContent = el.name;
   document.getElementById('ip-num').textContent = el.n;
   document.getElementById('ip-mass').textContent = el.mass + ' u';
-  document.getElementById('ip-cat').textContent = el.cat.charAt(0).toUpperCase()+el.cat.slice(1);
+  document.getElementById('ip-cat').textContent = el.cat.charAt(0).toUpperCase() + el.cat.slice(1);
   document.getElementById('ip-period').textContent = el.p;
   document.getElementById('ip-group').textContent = el.g;
   document.getElementById('ip-state').textContent = el.state;
-  document.getElementById('ip-config').textContent = el.cfg;
+  document.getElementById('ip-cfg').textContent = el.cfg;
   document.getElementById('info-panel').style.display = 'block';
+  document.getElementById('ip-sym').style.color = CAT_COLORS[el.cat] || '#7df9ff';
 }
-function closeInfo() {
+document.getElementById('close-info').addEventListener('click', e => {
+  e.stopPropagation();
   document.getElementById('info-panel').style.display = 'none';
-}
-document.getElementById('info-panel').addEventListener('click', e => e.stopPropagation());
-document.addEventListener('click', closeInfo);
-
-// Drag rotation
-container.addEventListener('mousedown', e => {
-  isDragging = true; lastX = e.clientX; lastY = e.clientY;
 });
-document.addEventListener('mousemove', e => {
-  if (!isDragging) return;
-  targetRotY += (e.clientX - lastX) * 0.4;
-  targetRotX -= (e.clientY - lastY) * 0.4;
-  targetRotX = Math.max(-60, Math.min(60, targetRotX));
-  lastX = e.clientX; lastY = e.clientY;
-});
-document.addEventListener('mouseup', () => isDragging = false);
 
-// Touch
-container.addEventListener('touchstart', e => {
-  isDragging = true;
-  lastX = e.touches[0].clientX;
-  lastY = e.touches[0].clientY;
-}, {passive: true});
-document.addEventListener('touchmove', e => {
-  if (!isDragging) return;
-  targetRotY += (e.touches[0].clientX - lastX) * 0.4;
-  targetRotX -= (e.touches[0].clientY - lastY) * 0.4;
-  targetRotX = Math.max(-60, Math.min(60, targetRotX));
-  lastX = e.touches[0].clientX;
-  lastY = e.touches[0].clientY;
-}, {passive: true});
-document.addEventListener('touchend', () => isDragging = false);
-
-// Smooth animation loop
-function animate() {
-  rotX += (targetRotX - rotX) * 0.1;
-  rotY += (targetRotY - rotY) * 0.1;
-  scene.style.transform = `rotateX(${rotX}deg) rotateY(${rotY}deg)`;
-  if (!isDragging) targetRotY += 0.15;
-  animFrame = requestAnimationFrame(animate);
-}
-
-buildTable();
-animate();
-
-window.addEventListener('resize', buildTable);
+render();
 </script>
 </body>
 </html>
